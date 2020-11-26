@@ -5,24 +5,23 @@ using System.Text;
 
 namespace AutoDiffNet.Terms
 {
-    class Ln : Term
+    class Cos : Term
     {
         Term body;
-        public Ln(Term f)
+        public Cos(Term f)
         {
             body = f;
         }
 
-        
-
         public override Expression Expr(Expression param)
         {
-            return ExpressionEx.Ln(body.Expr(param));
+            return ExpressionEx.Cos(body.Expr(param));
+            
         }
 
         public override Expression GradExpr(Expression param, int dx)
         {
-            return Expression.Divide(body.GradExpr(param, dx), body.Expr(param));
+            return Expression.Multiply(Expression.Constant(-1.0), ExpressionEx.Sin(body.Expr(param)));
         }
     }
 }

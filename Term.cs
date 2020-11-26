@@ -15,6 +15,9 @@ namespace AutoDiffNet
 
         public static Term Exp(Term f) => new Exp(f);
         public static Term Ln(Term f) => new Ln(f);
+        public static Term Sin(Term f) => new Sin(f);
+        public static Term Cos(Term f) => new Cos(f);
+        public static Term Pow(Term b, Term e) => new Pow(b, e);
 
         public static Term operator* (Term left, Term right)
         {

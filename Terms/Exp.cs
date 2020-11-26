@@ -15,16 +15,13 @@ namespace AutoDiffNet.Terms
 
         public override Expression Expr(Expression param)
         {
-            Expression<Func<double,double>> expExpression= x=>Math.Exp(x);
-            return Expression.Invoke(expExpression, body.Expr(param));
+            return ExpressionEx.Exp(body.Expr(param));
             
         }
 
         public override Expression GradExpr(Expression param, int dx)
         {
-            Expression<Func<double, double>> expExpression = x => Math.Exp(x);
-            return Expression.Invoke(expExpression, body.Expr(param));
-
+            return ExpressionEx.Exp(body.Expr(param));
         }
     }
 }
