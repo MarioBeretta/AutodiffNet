@@ -8,6 +8,11 @@ namespace AutoDiffNet
 {
     public abstract class Term
     {
+        protected string _rappr;
+        public Term()
+        {
+            
+        }
         public static implicit operator Term(double value)
         {
             return Constant.Build(value);
@@ -26,12 +31,14 @@ namespace AutoDiffNet
 
         public static Term operator +(Term left, Term right)
         {
-            return Sum.Build(left, right);
+            return Add.Build(left, right);
         }
+
+        public static Term Sum(Term[] terms) => new Sum(terms);
 
         public static Term operator -(Term left, Term right)
         {
-            return Sum.Build(left, -1*right);
+            return Add.Build(left, -1*right);
         }
 
         public static Term operator /(Term left, Term right)
@@ -47,22 +54,24 @@ namespace AutoDiffNet
             return expr.ToString();
         }
 
+        public abstract string GradientString(int dx);
         public Func<double[], double> Grad(int dx)
         {
 
             var vect = Expression.Parameter(typeof(double[]), "X");
             var expr = GradExpr(vect, dx);
             return Expression.Lambda<Func<double[], double>>(expr, vect).Compile();
-
         }
 
+        public abstract double EvalGradient(double[] x, int dx);
         public abstract Expression Expr(Expression param);
 
         public abstract Expression GradExpr(Expression param, int dx);
 
+        public abstract double Eval(double[] x);
+
         public  Func<double[], double> Compile()
         {
-            
             var vect = Expression.Parameter(typeof(double[]), "X");
             var expr = Expr(vect);
             return Expression.Lambda<Func<double[], double>>(expr, vect).Compile();

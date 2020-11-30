@@ -41,5 +41,26 @@ namespace AutoDiffNet.Terms
                     Expression.Multiply(g, g)));
 
         }
+
+        public override double EvalGradient(double[] x, int dx) 
+        {
+            double g = right.Eval(x);
+            double g1 = right.EvalGradient(x, dx);
+            double f = left.Eval(x);
+            double f1 = left.EvalGradient(x, dx);
+            return f1 / g - f * g1 / (g * g);
+        }
+        public override double Eval(double[] x) => left.Eval(x) * right.Eval(x);
+
+
+        public override string GradientString(int dx)
+        {
+            return $"{left.GradientString(dx)} / {right.ToString()} - ( {left.ToString()} * {right.GradientString(dx)} )/ ({right.ToString()}*{right.ToString()})";
+        }
+
+        public override string ToString()
+        {
+            return $" {left.ToString()} / {right.ToString() } ";
+        }
     }
 }

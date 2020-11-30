@@ -35,3 +35,11 @@ namespace AutoDiffNetConsole
     }
 }
 ```
+
+## What's new 0.7.4
+
+ - Performance improvents
+ - *Term.Sum* to add multiple terms
+ - Tree based evaluation to cover cases where the compiled expression is to large
+ - 
+

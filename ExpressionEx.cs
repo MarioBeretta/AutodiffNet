@@ -9,21 +9,25 @@ namespace AutoDiffNet
     {
         public static Expression Ln(Expression f)
         {
-            Expression<Func<double, double>> e = x => Math.Log(x);
-            return Expression.Invoke(e, f);
+            var Log = typeof(Math).GetMethod("Log",
+                System.Reflection.BindingFlags.Public| System.Reflection.BindingFlags.Static,
+                null,
+                System.Reflection.CallingConventions.Any,
+                new Type[] { typeof(double) }, null);
+            return Expression.Call(Log, f);
         }
 
         public static Expression Exp(Expression f)
         {
-            Expression<Func<double, double>> e = x => Math.Exp(x);
-            return Expression.Invoke(e, f);
+            var Exp = typeof(Math).GetMethod("Exp",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
+                null,
+                System.Reflection.CallingConventions.Any,
+                new Type[] { typeof(double) }, null);
+
+            return Expression.Call(Exp, f);
         }
 
-        public static Expression Pow(Expression b, Expression exponent)
-        {
-            Expression<Func<double, double, double>> e = (x,y) => Math.Pow(x,y);
-            return Expression.Invoke(e, b, exponent);
-        }
 
         public static Expression Sin(Expression f)
         {
@@ -43,5 +47,9 @@ namespace AutoDiffNet
             return Expression.Invoke(e, f);
         }
 
+        public static bool IsZero(this Expression f)
+        {
+            return (f.NodeType == ExpressionType.Constant && (double)((ConstantExpression)f).Value == 0.0);
+        }
     }
 }

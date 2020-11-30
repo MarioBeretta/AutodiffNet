@@ -23,5 +23,17 @@ namespace AutoDiffNet.Terms
         {
             return Expression.Multiply(Expression.Constant(-1.0), ExpressionEx.Sin(body.Expr(param)));
         }
+
+        public override double EvalGradient(double[] x, int dx) => -Math.Sin(body.EvalGradient(x,dx));
+        public override double Eval(double[] x) => Math.Cos(body.Eval(x));
+        public override string GradientString(int dx)
+        {
+            return $" -Sin({body.GradientString(dx)}) ";
+        }
+
+        public override string ToString()
+        {
+            return $"Cos({body.ToString()})";
+        }
     }
 }

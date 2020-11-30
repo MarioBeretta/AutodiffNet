@@ -24,5 +24,18 @@ namespace AutoDiffNet.Terms
         {
             return Expression.Divide(body.GradExpr(param, dx), body.Expr(param));
         }
+
+        public override double EvalGradient(double[] x, int dx) => body.EvalGradient(x, dx) / body.Eval(x);
+        public override double Eval(double[] x) => Math.Log(body.Eval(x));
+
+        public override string GradientString(int dx)
+        {
+            return $"( {body.GradientString(dx)} / {body.ToString()} )";
+        }
+
+        public override string ToString()
+        {
+            return $"Ln({body.ToString()})";
+        }
     }
 }

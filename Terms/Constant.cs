@@ -17,6 +17,11 @@ namespace AutoDiffNet.Terms
             return new Constant(value);
         }
 
+        public override double EvalGradient(double[] x, int dx) => 0;
+
+        public override double Eval(double[] x) => v;
+
+
         public override Expression Expr(Expression param)
         {
             return Expression.Constant(v);
@@ -25,6 +30,15 @@ namespace AutoDiffNet.Terms
         public override Expression GradExpr(Expression param, int dx)
         {
             return Expression.Constant(0.0);
+        }
+        public override string GradientString(int dx)
+        {
+            return $"0";
+        }
+
+        public override string ToString()
+        {
+            return $"{v}";
         }
     }
 }

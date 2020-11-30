@@ -4,11 +4,6 @@ using System.Text;
 
 namespace AutoDiffNet
 {
-    public static class ext
-    {
-        
-    }
-
     public class VariableVect
     {
         public double[] v;
