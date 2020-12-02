@@ -20,6 +20,18 @@ namespace AutoDiffNetUnitTests
         }
 
         [TestMethod]
+        public void NestedSum()
+        {
+            Variable x = new Variable();
+            Term g = Term.Sum(new[] { x[0], x[1], x[2] });
+            Term f = Term.Sum(new[] { g, g, x[0] });
+
+            double[] p = new double[] { 2, 6, 3 };
+            var F = f.Compile();
+            Assert.AreEqual(11+11+2, F(p));
+        }
+
+        [TestMethod]
         public void BasicSumGradient()
         {
             Variable x = new Variable();

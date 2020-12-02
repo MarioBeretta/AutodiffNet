@@ -31,39 +31,13 @@ namespace AutoDiffNet
 
         }
 
-        private void Visitor(Expression e, Func<Expression, int> callback)
-        {
-            callback(e);
-            BinaryExpression binExpr = e as BinaryExpression;
-            if (binExpr != null)
-            {
-                Visitor(binExpr.Left, callback);
-                Visitor(binExpr.Right, callback);
-            }
-            else
-            {
-                UnaryExpression unaryExpression = e as UnaryExpression;
-                if (unaryExpression != null)
-                {
-                    Visitor(unaryExpression, callback);
-                }
-                else
-                {
-                    BlockExpression blockExpression = e as BlockExpression;
-                    if (blockExpression != null)
-                    {
-                        foreach (var x in blockExpression.Expressions) Visitor(x, callback);
-                    }
-                    else
-                        return;
-                }
+        
 
-            }
-        }
+        
 
         private void Visit(Expression e, Dictionary<string, ExpressionStatistics> dict)
         {
-            string s = e.ToString();
+            string s = e.GetFullString();
             BinaryExpression binExpr = e as BinaryExpression;
             if (binExpr != null)
             {
@@ -104,14 +78,17 @@ namespace AutoDiffNet
 
         private Expression ReplaceExpression(Expression e, Dictionary<string, ExpressionStatistics> dict)
         {
-
-            if (!dict.ContainsKey(e.ToString())) return e;
-
-            var v = dict[e.ToString()];
-            if (v.Usage>1)
+            string s = e.GetFullString();
+            if (dict.ContainsKey(s))
             {
-                return v.PreComputeVariable;
+                var v = dict[s];
+                if (v.Usage > 1)
+                {
+                    return v.PreComputeVariable;
+                }
             }
+
+            
 
             BinaryExpression binExpr = e as BinaryExpression;
             if (binExpr != null)

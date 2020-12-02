@@ -24,7 +24,7 @@ namespace AutoDiffNet.Terms
 
         public override Expression Expr(Expression param)
         {
-            var result = Expression.Parameter(typeof(double));
+            var result = Expression.Parameter(typeof(double),"result");
             List<Expression> arr = new List<Expression>();
             arr.Add(Expression.Assign(result, Expression.Constant(0.0)));
             arr.AddRange(elems.Select(x => Expression.AddAssign(result, x.Expr(param))));

@@ -51,5 +51,46 @@ namespace AutoDiffNet
         {
             return (f.NodeType == ExpressionType.Constant && (double)((ConstantExpression)f).Value == 0.0);
         }
+
+
+        private static void Visitor(Expression e, Action<Expression> callback)
+        {
+            callback(e);
+            BinaryExpression binExpr = e as BinaryExpression;
+            if (binExpr != null)
+            {
+                Visitor(binExpr.Left, callback);
+                Visitor(binExpr.Right, callback);
+            }
+            else
+            {
+                UnaryExpression unaryExpression = e as UnaryExpression;
+                if (unaryExpression != null)
+                {
+                    Visitor(unaryExpression, callback);
+                }
+                else
+                {
+                    BlockExpression blockExpression = e as BlockExpression;
+                    if (blockExpression != null)
+                    {
+                        foreach (var x in blockExpression.Expressions) Visitor(x, callback);
+                    }
+                    else
+                        return;
+                }
+            }
+        }
+
+        public static string GetFullString(this Expression f)
+        {
+            string res="";
+            Visitor(f, (e) =>
+            {
+                res += "("+e.ToString()+")";
+            });
+            return res;
+        }
+
     }
 }
