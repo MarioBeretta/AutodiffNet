@@ -7,8 +7,6 @@ namespace AutoDiffNet.Terms
 {
     class Product : BinaryTerm
     {
-        Term Left;
-        Term Right;
 
         Product(Term left, Term right)
         {
