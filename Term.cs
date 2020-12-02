@@ -9,6 +9,9 @@ namespace AutoDiffNet
     public abstract class Term
     {
         protected string _rappr;
+
+        //public abstract TermTypes TermType {  get; }
+
         public Term()
         {
             
@@ -51,15 +54,17 @@ namespace AutoDiffNet
 
             var vect = Expression.Parameter(typeof(double[]), "X");
             var expr = GradExpr(vect, dx);
+
             return expr.ToString();
         }
 
         public abstract string GradientString(int dx);
-        public Func<double[], double> Grad(int dx)
+        public Func<double[], double> Grad(int dx, ExpressionOptimizerFlags optimizationFlags= ExpressionOptimizerFlags.Default)
         {
 
             var vect = Expression.Parameter(typeof(double[]), "X");
             var expr = GradExpr(vect, dx);
+            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr);
             return Expression.Lambda<Func<double[], double>>(expr, vect).Compile();
         }
 
@@ -70,13 +75,14 @@ namespace AutoDiffNet
 
         public abstract double Eval(double[] x);
 
-        public  Func<double[], double> Compile()
+        public  Func<double[], double> Compile(ExpressionOptimizerFlags optimizationFlags = ExpressionOptimizerFlags.Default)
         {
             var vect = Expression.Parameter(typeof(double[]), "X");
+            
             var expr = Expr(vect);
+            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr);
+
             return Expression.Lambda<Func<double[], double>>(expr, vect).Compile();
         }
-        
-
     }
 }

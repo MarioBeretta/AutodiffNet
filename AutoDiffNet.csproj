@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -13,6 +13,12 @@
     <RepositoryUrl>https://github.com/MarioBeretta/AutodiffNet</RepositoryUrl>
     <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="AutoDiffNetUnitTests\**" />
+    <EmbeddedResource Remove="AutoDiffNetUnitTests\**" />
+    <None Remove="AutoDiffNetUnitTests\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Remove="LICENSE" />

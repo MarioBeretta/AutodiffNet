@@ -5,15 +5,13 @@ using System.Text;
 
 namespace AutoDiffNet.Terms
 {
-    class Divide : Term
+    class Divide : BinaryTerm
     {
-        Term left;
-        Term right;
 
         Divide(Term left, Term right)
         {
-            this.left = left;
-            this.right = right;
+            this.Left = left;
+            this.Right = right;
         }
 
         internal static Term Build(Term left, Term right)
@@ -24,15 +22,15 @@ namespace AutoDiffNet.Terms
 
         public override Expression Expr(Expression param)
         {
-            return Expression.Divide(left.Expr(param), right.Expr(param));
+            return Expression.Divide(Left.Expr(param), Right.Expr(param));
         }
 
         public override Expression GradExpr(Expression param, int dx)
         {
-            var f1 = left.GradExpr(param, dx);
-            var g1 = right.GradExpr(param, dx);
-            var f = left.Expr(param);
-            var g = right.Expr(param);
+            var f1 = Left.GradExpr(param, dx);
+            var g1 = Right.GradExpr(param, dx);
+            var f = Left.Expr(param);
+            var g = Right.Expr(param);
 
             return Expression.Subtract(
                 Expression.Divide(f1, g),
@@ -44,23 +42,23 @@ namespace AutoDiffNet.Terms
 
         public override double EvalGradient(double[] x, int dx) 
         {
-            double g = right.Eval(x);
-            double g1 = right.EvalGradient(x, dx);
-            double f = left.Eval(x);
-            double f1 = left.EvalGradient(x, dx);
+            double g = Right.Eval(x);
+            double g1 = Right.EvalGradient(x, dx);
+            double f = Left.Eval(x);
+            double f1 = Left.EvalGradient(x, dx);
             return f1 / g - f * g1 / (g * g);
         }
-        public override double Eval(double[] x) => left.Eval(x) * right.Eval(x);
+        public override double Eval(double[] x) => Left.Eval(x) * Right.Eval(x);
 
 
         public override string GradientString(int dx)
         {
-            return $"{left.GradientString(dx)} / {right.ToString()} - ( {left.ToString()} * {right.GradientString(dx)} )/ ({right.ToString()}*{right.ToString()})";
+            return $"{Left.GradientString(dx)} / {Right.ToString()} - ( {Left.ToString()} * {Right.GradientString(dx)} )/ ({Right.ToString()}*{Right.ToString()})";
         }
 
         public override string ToString()
         {
-            return $" {left.ToString()} / {right.ToString() } ";
+            return $" {Left.ToString()} / {Right.ToString() } ";
         }
     }
 }

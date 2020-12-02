@@ -5,8 +5,10 @@ using System.Text;
 
 namespace AutoDiffNet.Terms
 {
-    class Constant : Term
+    class Constant:Term
     {
+        //public override TermTypes TermType => TermTypes.Constant;
+
         double v;
         public Constant(double v)
         {

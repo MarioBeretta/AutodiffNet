@@ -5,9 +5,9 @@ using System.Text;
 
 namespace AutoDiffNet.Terms
 {
-    class Cos : Term
+    class Cos : UnaryTerm
     {
-        Term body;
+        
         public Cos(Term f)
         {
             body = f;
