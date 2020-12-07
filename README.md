@@ -62,6 +62,9 @@ The Optimizer have several feature and they can be enabled or disabled using the
 | ReuseOfDuplicatedExpression | The optimizer will scan the Function f(x) and will evalute every sub-expression just 1 times; es: f(x) = g(x)*2+ Log(g(x)) then with this option g(x) will be evaluated only once and the result will be cached | Enabled |
 | ZeroDivideBy | Any sub-expression in the form 0 / g(x)  will be conveted in 0 and g(x) will not be evaluated; condition where g(x) is zero need to be validated externally | Disabled |
 
+## What's new 1.2.0
+ - Adding Gradient Function, that evaluate all the Gradient vector at once
+
 ## What's new 1.0.0
  - New Expression optimizer feature (enabled by default)
  - Some Unit Tests

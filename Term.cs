@@ -64,8 +64,41 @@ namespace AutoDiffNet
 
             var vect = Expression.Parameter(typeof(double[]), "X");
             var expr = GradExpr(vect, dx);
-            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr);
+            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr, typeof(double));
             return Expression.Lambda<Func<double[], double>>(expr, vect).Compile();
+        }
+
+        public Func<double[], double[]> Gradient(IList<int> dxs, ExpressionOptimizerFlags optimizationFlags = ExpressionOptimizerFlags.Default)
+        {
+            ParameterExpression result = Expression.Parameter(typeof(double[]));
+            
+            var X = Expression.Parameter(typeof(double[]), "X");
+            List<Expression> blockExpression = new List<Expression>();
+            
+            blockExpression.Add(Expression.Assign(result, Expression.NewArrayBounds(typeof(double), Expression.Constant(dxs.Count)))); // Allocate results
+
+            int idx = 0;
+            foreach(var dx in dxs)
+            {
+                var gdx = GradExpr(X, dx);
+                blockExpression.Add(
+                    Expression.Assign(
+                        Expression.ArrayAccess(result, Expression.Constant(idx)),
+                        gdx
+                    ));
+                idx++;
+            }
+
+            blockExpression.Add(result);
+            Expression expr = Expression.Block(
+                new[] { result },
+                blockExpression
+                );
+
+            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr, typeof(double[]));
+
+            var lambda = Expression.Lambda<Func<double[], double[]>>(expr, X);
+            return lambda.Compile();
         }
 
         public abstract double EvalGradient(double[] x, int dx);
@@ -80,7 +113,7 @@ namespace AutoDiffNet
             var vect = Expression.Parameter(typeof(double[]), "X");
             
             var expr = Expr(vect);
-            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr);
+            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr, typeof(double));
 
             return Expression.Lambda<Func<double[], double>>(expr, vect).Compile();
         }

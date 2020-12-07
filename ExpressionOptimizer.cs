@@ -31,19 +31,102 @@ namespace AutoDiffNet
 
         }
 
-        
+        Dictionary<Expression, string> _cacheExpressionString = new Dictionary<Expression, string>();
 
-        
-
-        private void Visit(Expression e, Dictionary<string, ExpressionStatistics> dict)
+        private static void Visitor(Expression e, Action<Expression> callback)
         {
-            string s = e.GetFullString();
+            callback(e);
             BinaryExpression binExpr = e as BinaryExpression;
             if (binExpr != null)
             {
-                if (e.NodeType == ExpressionType.Assign) return;
+                Visitor(binExpr.Left, callback);
+                Visitor(binExpr.Right, callback);
+            }
+            else
+            {
+                UnaryExpression unaryExpression = e as UnaryExpression;
+                if (unaryExpression != null)
+                {
+                    Visitor(unaryExpression.Operand, callback);
+                }
+                else
+                {
+                    BlockExpression blockExpression = e as BlockExpression;
+                    if (blockExpression != null)
+                    {
+                        foreach (var x in blockExpression.Expressions) Visitor(x, callback);
+                    }
+                    else
+                    {
+                        MethodCallExpression callExpression = e as MethodCallExpression;
+                        if (callExpression!=null)
+                        {
+                            Visitor(callExpression.Arguments[0], callback);
+                        }
+                        else
+                            return;
+                    }
+                        
+                }
+            }
+        }
+
+        public string GetFullString(Expression f)
+        {
+            StringBuilder sb = new StringBuilder();
+            string z;
+            if (_cacheExpressionString.TryGetValue(f, out z))
+                return z;
+            bool toBig = false;
+
+            Visitor(f, (e) =>
+            {
+                if (e == f) return;
+                string s;
+                if (!_cacheExpressionString.TryGetValue(e, out s))
+                {
+                    s = GetFullString(e);
+                    
+                }
+                if (sb.Length < 0x2000)
+                {
+                    sb.Append("(");
+                    sb.Append(s);
+                    sb.Append(")");
+                }
+                else
+                {
+                    toBig = true;
+                }
+            });
+            if (toBig) return null;
+            sb.Append("(");
+            sb.Append(f.ToString());
+            sb.Append(z);
+            
+            sb.Append(")");
+
+
+            z = sb.ToString();
+            
+            _cacheExpressionString.Add(f, z);
+            return z;
+        }
+
+
+
+
+        private void Visit(Expression e, Dictionary<string, ExpressionStatistics> dict)
+        {
+            string s = GetFullString(e);
+
+            BinaryExpression binExpr = e as BinaryExpression;
+            if (binExpr != null)
+            {
+                
                 Visit(binExpr.Left, dict);
                 Visit(binExpr.Right, dict);
+                if (e.NodeType == ExpressionType.Assign) return;
                 if (e.NodeType == ExpressionType.AddAssign) return;
             }
             else
@@ -51,7 +134,9 @@ namespace AutoDiffNet
                 UnaryExpression unaryExpression = e as UnaryExpression;
                 if (unaryExpression != null)
                 {
-                    Visit(unaryExpression, dict);
+                    Visit(unaryExpression.Operand, dict);
+                    if (e.NodeType == ExpressionType.Parameter) return;
+                    if (e.NodeType == ExpressionType.Constant) return;
                 }
                 else
                 {
@@ -61,32 +146,47 @@ namespace AutoDiffNet
                         foreach (var x in blockExpression.Expressions) Visit(x, dict);
                     }
                     else
-                        return;
+                    {
+                        MethodCallExpression callExpression = e as MethodCallExpression;
+                        if (callExpression != null)
+                        {
+                            Visit(callExpression.Arguments[0], dict);
+                        }
+                        else
+                            return;
+                    }
                 }
 
             }
 
-            ExpressionStatistics v;
-            if (!dict.TryGetValue(s, out v))
+            if (s != null)
             {
-                v = new ExpressionStatistics() { expression = e, Name = "Var_" + dict.Count.ToString(), Usage = 1 };
-                dict.Add(s, v);
+                ExpressionStatistics v;
+                if (!dict.TryGetValue(s, out v))
+                {
+                    v = new ExpressionStatistics() { expression = e, Name = "Var_" + dict.Count.ToString(), Usage = 1 };
+                    dict.Add(s, v);
+                }
+                else
+                    v.Usage += 1;
             }
-            else
-                v.Usage += 1;
         }
 
         private Expression ReplaceExpression(Expression e, Dictionary<string, ExpressionStatistics> dict)
         {
-            string s = e.GetFullString();
-            if (dict.ContainsKey(s))
+            string s = GetFullString(e);
+            if (s!=null)
             {
-                var v = dict[s];
-                if (v.Usage > 1)
+                if (dict.ContainsKey(s))
                 {
-                    return v.PreComputeVariable;
+                    var v = dict[s];
+                    if (v.Usage > 1)
+                    {
+                        return v.PreComputeVariable;
+                    }
                 }
             }
+            
 
             
 
@@ -105,7 +205,7 @@ namespace AutoDiffNet
             UnaryExpression unaryExpression = e as UnaryExpression;
             if (unaryExpression != null)
             {
-                var body = ReplaceExpression(unaryExpression, dict);
+                var body = ReplaceExpression(unaryExpression.Operand, dict);
                 return unaryExpression.Update(body);
             }
             BlockExpression blockExpression = e as BlockExpression;
@@ -115,6 +215,15 @@ namespace AutoDiffNet
                 return blockExpression.Update(blockExpression.Variables, elems);
                 
             }
+
+            MethodCallExpression callExpression = e as MethodCallExpression;
+            if (callExpression != null)
+            {
+                var arg = ReplaceExpression(callExpression.Arguments[0], dict);
+                return callExpression.Update(callExpression.Object, new[] { arg });
+
+            }
+                
             return e;
         }
 
@@ -158,7 +267,7 @@ namespace AutoDiffNet
 
 
 
-        public Expression OptimizeExpression(Expression expr, ExpressionOptimizerFlags flags=ExpressionOptimizerFlags.Default)
+        public Expression OptimizeExpression(Expression expr, Type resultType, ExpressionOptimizerFlags flags=ExpressionOptimizerFlags.Default)
         {
             Dictionary<string, ExpressionStatistics> expressions = new Dictionary<string, ExpressionStatistics>();
             expr = OptimizeSimpleOperation(expr, flags);
@@ -183,7 +292,7 @@ namespace AutoDiffNet
                 if (preComputation.Count > 0)
                 {
 
-                    var result = Expression.Parameter(typeof(double));
+                    var result = Expression.Parameter(resultType);
                     variables.Add(result);
                     preComputation.Add(Expression.Assign(result, newExpression));
                     var res = Expression.Block(variables.ToArray(), preComputation.ToArray());
