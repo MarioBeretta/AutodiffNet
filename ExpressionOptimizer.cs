@@ -33,71 +33,116 @@ namespace AutoDiffNet
 
         Dictionary<Expression, string> _cacheExpressionString = new Dictionary<Expression, string>();
 
-        private static void Visitor(Expression e, Action<Expression> callback)
+        private static void Visitor(Expression e, StringBuilder sb)
         {
-            callback(e);
             BinaryExpression binExpr = e as BinaryExpression;
             if (binExpr != null)
             {
-                Visitor(binExpr.Left, callback);
-                Visitor(binExpr.Right, callback);
+                sb.Append(binExpr.NodeType);
+                sb.Append("(");
+                Visitor(binExpr.Left, sb);
+                sb.Append(",");
+                Visitor(binExpr.Right, sb);
+                sb.Append(")");
+                return;
             }
-            else
+            
+            UnaryExpression unaryExpression = e as UnaryExpression;
+            if (unaryExpression != null)
             {
-                UnaryExpression unaryExpression = e as UnaryExpression;
-                if (unaryExpression != null)
-                {
-                    Visitor(unaryExpression.Operand, callback);
-                }
-                else
-                {
-                    BlockExpression blockExpression = e as BlockExpression;
-                    if (blockExpression != null)
-                    {
-                        foreach (var x in blockExpression.Expressions) Visitor(x, callback);
-                    }
-                    else
-                    {
-                        MethodCallExpression callExpression = e as MethodCallExpression;
-                        if (callExpression!=null)
-                        {
-                            Visitor(callExpression.Arguments[0], callback);
-                        }
-                        else
-                            return;
-                    }
-                        
-                }
+                sb.Append(unaryExpression.NodeType);
+                sb.Append("(");
+                Visitor(unaryExpression.Operand, sb);
+                sb.Append(")");
+                return;
             }
+            BlockExpression blockExpression = e as BlockExpression;
+            if (blockExpression != null)
+            {
+                sb.Append(blockExpression.NodeType);
+                sb.Append("{");
+                foreach (var x in blockExpression.Expressions) { sb.Append("\n"); Visitor(x, sb); }
+                sb.Append("\n}");
+                return;
+            }
+            MethodCallExpression callExpression = e as MethodCallExpression;
+            if (callExpression!=null)
+            {
+                sb.Append(callExpression.NodeType);
+                sb.Append("(");
+                Visitor(callExpression.Arguments[0], sb);
+                sb.Append(")");
+                return;
+            }
+            ConstantExpression constantExpression = e as ConstantExpression;
+            if (constantExpression!=null)
+            {
+                sb.Append(constantExpression.Value);
+                return;
+            }
+            ParameterExpression parameterExpression = e as ParameterExpression;
+            if (parameterExpression!=null)
+            {
+                sb.Append(parameterExpression.Name);
+                return;
+            }
+            IndexExpression indexExpression = e as IndexExpression;
+            if (indexExpression!=null)
+            {
+                sb.Append(indexExpression.ToString());
+                return;
+            }
+            NewArrayExpression newArrayExpression = e as NewArrayExpression;
+            if (newArrayExpression!=null)
+            {
+                sb.Append(newArrayExpression.ToString());
+                return;
+            }
+            return;
         }
+
+
 
         public string GetFullString(Expression f)
         {
-            StringBuilder sb = new StringBuilder();
+            
+            
+
             string z;
             if (_cacheExpressionString.TryGetValue(f, out z))
                 return z;
-            bool toBig = false;
-
-            Visitor(f, (e) =>
+            
+            StringBuilder sb = new StringBuilder();
+            Visitor(f, sb);
+            /*
+            (e) =>
             {
-                if (e == f) return;
+                if (e == f) return false;
                 string s;
-                if (!_cacheExpressionString.TryGetValue(e, out s))
+                if (_cacheExpressionString.TryGetValue(e, out s))
                 {
-                    s = GetFullString(e);
-                    
-                }
-                if (sb.Length < 0x2000)
-                {
-                    sb.Append("(");
-                    sb.Append(s);
-                    sb.Append(")");
+                    if (sb.Length < 0x2000)
+                    {
+                        sb.Append("(");
+                        sb.Append(s);
+                        sb.Append(")");
+                    }
+                    else
+                    {
+                        toBig = true;
+                    }
+                    return true;
                 }
                 else
                 {
-                    toBig = true;
+                    if (sb.Length < 0x2000)
+                        sb.Append(e.NodeType);
+                    else
+                        toBig = true;
+
+                    return false;
                 }
+
             });
             if (toBig) return null;
             sb.Append("(");
@@ -106,7 +151,7 @@ namespace AutoDiffNet
             
             sb.Append(")");
 
-
+            */
             z = sb.ToString();
             
             _cacheExpressionString.Add(f, z);
