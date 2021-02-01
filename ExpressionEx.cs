@@ -9,16 +9,25 @@ namespace AutoDiffNet
     {
         public static Expression Ln(Expression f)
         {
+#if NETSTANDARD1_3
+            Expression<Func<double, double>> e = x => Math.Log(x);
+            return Expression.Invoke(e, f);
+#else
             var Log = typeof(Math).GetMethod("Log",
                 System.Reflection.BindingFlags.Public| System.Reflection.BindingFlags.Static,
                 null,
                 System.Reflection.CallingConventions.Any,
                 new Type[] { typeof(double) }, null);
             return Expression.Call(Log, f);
+#endif
         }
 
         public static Expression Exp(Expression f)
         {
+#if NETSTANDARD1_3
+            Expression<Func<double, double>> e = x => Math.Exp(x);
+            return Expression.Invoke(e, f);
+#else
             var Exp = typeof(Math).GetMethod("Exp",
                 System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static,
                 null,
@@ -26,6 +35,7 @@ namespace AutoDiffNet
                 new Type[] { typeof(double) }, null);
 
             return Expression.Call(Exp, f);
+#endif
         }
 
 

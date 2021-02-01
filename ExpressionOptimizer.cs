@@ -33,16 +33,16 @@ namespace AutoDiffNet
 
         Dictionary<Expression, string> _cacheExpressionString = new Dictionary<Expression, string>();
 
-        private static void Visitor(Expression e, StringBuilder sb)
+        private static void Visitor(Expression e, StringBuilder sb, Dictionary<Expression, int> parametersId)
         {
             BinaryExpression binExpr = e as BinaryExpression;
             if (binExpr != null)
             {
                 sb.Append(binExpr.NodeType);
                 sb.Append("(");
-                Visitor(binExpr.Left, sb);
+                Visitor(binExpr.Left, sb, parametersId);
                 sb.Append(",");
-                Visitor(binExpr.Right, sb);
+                Visitor(binExpr.Right, sb, parametersId);
                 sb.Append(")");
                 return;
             }
@@ -52,7 +52,7 @@ namespace AutoDiffNet
             {
                 sb.Append(unaryExpression.NodeType);
                 sb.Append("(");
-                Visitor(unaryExpression.Operand, sb);
+                Visitor(unaryExpression.Operand, sb, parametersId);
                 sb.Append(")");
                 return;
             }
@@ -61,7 +61,7 @@ namespace AutoDiffNet
             {
                 sb.Append(blockExpression.NodeType);
                 sb.Append("{");
-                foreach (var x in blockExpression.Expressions) { sb.Append("\n"); Visitor(x, sb); }
+                foreach (var x in blockExpression.Expressions) { sb.Append("\n"); Visitor(x, sb, parametersId); }
                 sb.Append("\n}");
                 return;
             }
@@ -70,7 +70,7 @@ namespace AutoDiffNet
             {
                 sb.Append(callExpression.NodeType);
                 sb.Append("(");
-                Visitor(callExpression.Arguments[0], sb);
+                Visitor(callExpression.Arguments[0], sb, parametersId);
                 sb.Append(")");
                 return;
             }
@@ -83,13 +83,32 @@ namespace AutoDiffNet
             ParameterExpression parameterExpression = e as ParameterExpression;
             if (parameterExpression!=null)
             {
-                sb.Append(parameterExpression.Name);
+                if (String.IsNullOrEmpty(parameterExpression.Name))
+                {
+                    int id;
+                    if (!parametersId.TryGetValue(e, out id))
+                    {
+                        id = parametersId.Count;
+                        parametersId.Add(e, id);
+                    }
+                    sb.Append("$$Var_" + id.ToString());
+                }
+                else
+                    sb.Append(parameterExpression.Name);
                 return;
             }
             IndexExpression indexExpression = e as IndexExpression;
             if (indexExpression!=null)
             {
-                sb.Append(indexExpression.ToString());
+                Visitor(indexExpression.Object, sb, parametersId);
+                sb.Append("[");
+                foreach (var x in indexExpression.Arguments)
+                {
+                    Visitor(x, sb, parametersId);
+                    sb.Append(",");
+                }
+                sb.Append("]");
+                
                 return;
             }
             NewArrayExpression newArrayExpression = e as NewArrayExpression;
@@ -97,6 +116,20 @@ namespace AutoDiffNet
             {
                 sb.Append(newArrayExpression.ToString());
                 return;
+            }
+
+            InvocationExpression invocationExpression = e as InvocationExpression;
+            if (invocationExpression!=null)
+            {
+                sb.Append("(");
+                foreach (var x in invocationExpression.Arguments)
+                {
+                    Visitor(x, sb, parametersId);
+                    sb.Append(",");
+                }
+
+                sb.Append(" => ");
+                Visitor(invocationExpression.Expression, sb, parametersId);
             }
             return;
         }
@@ -113,7 +146,7 @@ namespace AutoDiffNet
                 return z;
             
             StringBuilder sb = new StringBuilder();
-            Visitor(f, sb);
+            Visitor(f, sb, new Dictionary<Expression, int>());
             /*
             (e) =>
             {

@@ -95,7 +95,7 @@ namespace AutoDiffNet
                 blockExpression
                 );
 
-            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr, typeof(double[]));
+            if (!optimizationFlags.HasFlag(ExpressionOptimizerFlags.DisableAll)) expr = new ExpressionOptimizer().OptimizeExpression(expr, typeof(double[]), optimizationFlags);
 
             var lambda = Expression.Lambda<Func<double[], double[]>>(expr, X);
             return lambda.Compile();

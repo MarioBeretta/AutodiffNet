@@ -62,7 +62,12 @@ The Optimizer have several feature and they can be enabled or disabled using the
 | ReuseOfDuplicatedExpression | The optimizer will scan the Function f(x) and will evalute every sub-expression just 1 times; es: f(x) = g(x)*2+ Log(g(x)) then with this option g(x) will be evaluated only once and the result will be cached | Enabled |
 | ZeroDivideBy | Any sub-expression in the form 0 / g(x)  will be conveted in 0 and g(x) will not be evaluated; condition where g(x) is zero need to be validated externally | Disabled |
 
-## What's new 1.3.0
+## What's new 1.4.0
+ - AutodiffNet is now compatible with DotNet Standard 1.3
+ - Fix some issue in the Expression Optimizer 
+
+
+## Version 1.3.0
  - Improved performance for Expression optimizer
 
 ## Version 1.2.0
